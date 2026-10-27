@@ -1,0 +1,42 @@
+[tools]
+python = "3.13.3"
+rust = "1.95.0"
+uv = "0.11.16"
+
+[tasks.setup]
+description = "Install the package and development tools"
+run = "uv sync --locked"
+
+[tasks.test]
+description = "Test the native core and Python API"
+run = ["cargo test --locked", "uv run --locked pytest"]
+
+[tasks.lint]
+description = "Check source formatting and static analysis"
+run = [
+    "cargo fmt --all -- --check",
+    "cargo clippy --locked --all-targets --features python -- -D warnings",
+    "uv run --locked ruff check .",
+    "uv run --locked ruff format --check .",
+]
+
+[tasks.check]
+description = "Run tests and static checks"
+depends = ["test", "lint"]
+
+[tasks.examples]
+description = "Run both public API examples"
+run = ["uv run --locked python examples/expand_samples.py", "uv run --locked python examples/composite.py"]
+
+[tasks.build]
+description = "Build a wheel and a source distribution"
+run = "uv build --no-sources"
+
+[tasks.distribution]
+description = "Build and verify isolated wheel and sdist installations"
+depends = ["build"]
+run = "uv run --locked python scripts/verify_distribution.py dist"
+
+[tasks.benchmark]
+description = "Measure bounded expansion on reproducible input families"
+run = "uv run --locked python benchmarks/run.py --output benchmarks/results/local.json"
